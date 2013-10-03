@@ -1,17 +1,18 @@
-#modulename
+#puppet-drac
 
 ####Table of Contents
 
 1. [Overview](#overview)
-2. [Module Description - What the module does and why it is useful](#module-description)
-3. [Setup - The basics of getting started with [Modulename]](#setup)
-    * [What [Modulename] affects](#what-[modulename]-affects)
+2. [Description ](#module-description)
+3. [Setup](#setup)
+    * [What puppet-drac affects](#what-puppet-drac-affects)
     * [Setup requirements](#setup-requirements)
-    * [Beginning with [Modulename]](#beginning-with-[Modulename])
-4. [Usage - Configuration options and additional functionality](#usage)
-5. [Reference - An under-the-hood peek at what the module is doing and how](#reference)
-5. [Limitations - OS compatibility, etc.](#limitations)
-6. [Development - Guide for contributing to the module](#development)
+    * [Beginning with puppet-drac](#beginning-with-puppet-drac)
+4. [Usage](#usage)
+5. [Reference](#reference)
+5. [Limitations](#limitations)
+6. [Development](#development)
+7. [Wanted](#wanted)
 
 ##Overview
 
@@ -23,7 +24,7 @@ This lets you enforce uniform configuration of iDRAC card settings including net
 
 ##Setup
 
-###What [Modulename] affects
+###What puppet-drac affects
 
 * Settings on the system drac card
 * Packages and repositiories in the host OS are added via classes.
@@ -97,14 +98,16 @@ At the time of writing, cards that supported iDRAC 7 syntax continue to support 
 * You have to specify 6- and 7-style configuration values separately in your manifests. 
 * Some settings have dependencies not enforced by the type, notably the management NIC which disallows enabling of its DHCP DNS servers unless DHCP is enabled on the card. You can work around it by adding resource dependencies like so:
 
+```
       drac_setting { 'cfgLanNetworking/cfgNicUseDhcp':
         object_value => 1,
       }
-
+      
       drac_setting { 'cfgLanNetworking/cfgDNSServersFromDHCP':
         object_value => 1,
         require      => Drac_setting['cfgLanNetworking/cfgNicUseDhcp'];
       }
+```
 
 but these dependencies will have to be discovered experimentally as the type does not handle configuration objects on an individual basis.
 

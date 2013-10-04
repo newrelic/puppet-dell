@@ -1,13 +1,13 @@
-#puppet-drac
+#puppet-dell
 
 ####Table of Contents
 
 1. [Overview](#overview)
 2. [Description ](#module-description)
 3. [Setup](#setup)
-    * [What puppet-drac affects](#what-puppet-drac-affects)
+    * [What puppet-dell affects](#what-puppet-dell-affects)
     * [Setup requirements](#setup-requirements)
-    * [Beginning with puppet-drac](#beginning-with-puppet-drac)
+    * [Beginning with puppet-dell](#beginning-with-puppet-dell)
 4. [Usage](#usage)
 5. [Reference](#reference)
 5. [Limitations](#limitations)
@@ -24,7 +24,7 @@ This lets you enforce uniform configuration of iDRAC card settings including net
 
 ##Setup
 
-###What puppet-drac affects
+###What puppet-dell affects
 
 * Settings on the system drac card
 * Packages and repositiories in the host OS are added via classes.
@@ -34,7 +34,7 @@ This lets you enforce uniform configuration of iDRAC card settings including net
 
 Obviously this only works on Dell hardware, and you need a working racadm install.
   
-###Beginning with puppet-drac
+###Beginning with puppet-dell
 
 The simplest thing to do is `include dell`, which will add all the packages and repositories necessary to run the custom types.
 

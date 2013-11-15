@@ -5,8 +5,8 @@ Puppet::Type.type(:drac_setting).provide(:idrac7) do
   defaultfor :idrac_major_version => 7
 
   # must have idrac firmware >= 1.3
-  confine :true => File.exist?('/opt/dell/srvadmin/sbin/racadm') &&
-                   `/opt/dell/srvadmin/sbin/racadm getsysinfo` =~ /Firmware Version\s+= 1\.[3-9]/
+  confine :true => File.exist?('/opt/dell/srvadmin/sbin/racadm')# &&
+                   #`/opt/dell/srvadmin/sbin/racadm getsysinfo` =~ /Firmware Version\s+= 1\.[3-9]/
 
   commands :racadm => '/opt/dell/srvadmin/sbin/racadm'
 

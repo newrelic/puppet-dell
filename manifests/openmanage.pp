@@ -41,11 +41,23 @@ class dell::openmanage (
   }
 
   # OMSA 7.2 really needs IPMI to function
-  package { 'OpenIPMI':
-    ensure => installed,
+  case $::osfamily {
+    'Debian' : {
+      package { 'openipmi':
+        ensure => installed,
+        alias  => 'OpenIPMI',
+      }
+      $ipmiservice = 'openipmi'
+    }
+    'RedHat' : {
+      package { 'OpenIPMI':
+        ensure => installed,
+      }
+      $ipmiservice = 'ipmi'
+    }
   }
 
-  service { 'ipmi':
+  service { $ipmiservice:
     ensure => running,
     enable => true,
     notify => Service['dataeng'],

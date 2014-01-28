@@ -37,6 +37,12 @@ class dell::repos() inherits dell::params {
       ########################################
       # Create the two repos
       ########################################
+
+      #Some Dell stuff installs this, remove it and use ours
+      file { '/etc/yum.repos.d/dell-omsa-repository.repo'
+         ensure => 'absent',
+      }
+
       yumrepo { 'dell-omsa-indep':
         descr          => 'Dell OMSA repository - Hardware independent',
         enabled        => 1,
@@ -44,6 +50,7 @@ class dell::repos() inherits dell::params {
         gpgcheck       => 1,
         gpgkey         => $dell::params::repo_indep_gpgkey,
         failovermethod => 'priority',
+        require        => File['/etc/yum.repos.d/dell-omsa-repository.repo'],
       } -> package { 'yum-dellsysid':  # I dislike this syntax, but require would not work for some reason...
         ensure  => 'present',
       }
@@ -55,6 +62,7 @@ class dell::repos() inherits dell::params {
         gpgcheck       => 1,
         gpgkey         => $dell::params::repo_specific_gpgkey,
         failovermethod => 'priority',
+        require        => File['/etc/yum.repos.d/dell-omsa-repository.repo'],
       }
 
 

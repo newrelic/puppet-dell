@@ -33,11 +33,13 @@ class dell::openmanage (
     require => Class['dell::repos'],
   }
 
-  service { 'dataeng':
-    ensure     => 'running',
-    hasrestart => true,
-    hasstatus  => true,
-    require    => Package['srvadmin-deng'],
+  if $environment != 'vagrant' {
+    service { 'dataeng':
+      ensure     => 'running',
+      hasrestart => true,
+      hasstatus  => true,
+      require    => Package['srvadmin-deng'],
+    }
   }
 
   # OMSA 7.2 really needs IPMI to function
@@ -57,11 +59,13 @@ class dell::openmanage (
     }
   }
 
-  service { $ipmiservice:
-    ensure => running,
-    enable => true,
-    notify => Service['dataeng'],
-    require => Package['OpenIPMI'],
+  if $environment != 'vagrant' {
+    service { $ipmiservice:
+      ensure => running,
+      enable => true,
+      notify => Service['dataeng'],
+      require => Package['OpenIPMI'],
+    }
   }
 
   ########################################

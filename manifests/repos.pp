@@ -38,9 +38,9 @@ class dell::repos() inherits dell::params {
       # Create the two repos
       ########################################
 
-      #Some Dell stuff installs this, remove it and use ours
-      file { '/etc/yum.repos.d/dell-omsa-repository.repo'
-         ensure => 'absent',
+      # This would add duplicate repos, and we want to manage them explicitly
+      package { 'dell-omsa-repository':
+        ensure => 'absent',
       }
 
       yumrepo { 'dell-omsa-indep':
@@ -50,7 +50,7 @@ class dell::repos() inherits dell::params {
         gpgcheck       => 1,
         gpgkey         => $dell::params::repo_indep_gpgkey,
         failovermethod => 'priority',
-        require        => File['/etc/yum.repos.d/dell-omsa-repository.repo'],
+        require        => Package['dell-omsa-repository'],
       } -> package { 'yum-dellsysid':  # I dislike this syntax, but require would not work for some reason...
         ensure  => 'present',
       }
@@ -62,7 +62,7 @@ class dell::repos() inherits dell::params {
         gpgcheck       => 1,
         gpgkey         => $dell::params::repo_specific_gpgkey,
         failovermethod => 'priority',
-        require        => File['/etc/yum.repos.d/dell-omsa-repository.repo'],
+        require        => Package['dell-omsa-repository'],
       }
 
 
@@ -95,15 +95,6 @@ class dell::repos() inherits dell::params {
         refreshonly => true,
       }
 
-
-      ########################################
-      # Packages
-      ########################################
-
-      # This would add duplicate repos, and we want to manage them explicitly
-      package { 'dell-omsa-repository':
-        ensure => 'absent',
-      }
     }
   }
 }

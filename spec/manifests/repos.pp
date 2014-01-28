@@ -41,9 +41,7 @@ class dell::repos() inherits dell::params {
     gpgcheck       => 1,
     gpgkey         => $dell::params::repo_indep_gpgkey,
     failovermethod => 'priority',
-    require        => File['/etc/yum.repos.d/dell-omsa-repository.repo'],
-  } -> package { 'yum-dellsysid':  # I dislike this syntax, but require would not work for some reason...
-    ensure  => 'present',
+    require        => [ File['/etc/yum.repos.d/dell-omsa-repository.repo'], Package['yum-dellsysid'] ],
   }
 
   yumrepo { 'dell-omsa-specific':

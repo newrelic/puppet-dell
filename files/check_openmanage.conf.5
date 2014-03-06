@@ -1,0 +1,490 @@
+'\" t
+.\"     Title: check_openmanage.conf
+.\"    Author: Trond Hasle Amundsen <t.h.amundsen@usit.uio.no>
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: 08/06/2013
+.\"    Manual: Nagios plugin
+.\"    Source: check_openmanage
+.\"  Language: English
+.\"
+.TH "CHECK_OPENMANAGE\&.C" "5" "08/06/2013" "check_openmanage" "Nagios plugin"
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+check_openmanage.conf \- Configuration file for check_openmanage
+.SH "FILE FORMAT"
+.PP
+The file has an ini\-style syntax and consists of sections and parameters\&. A section begins with the name of the section in square brackets and continues until the next section begins\&. An example of section with two keywords and parameters:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        \fI[section]\fR
+            \fIkey1\fR = \fIboolean\fR
+            \fIkey2\fR = \fIstring\fR
+      
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+The data types used are string (no quotes needed) and bool (with values of
+\(lqTRUE/FALSE\(rq)\&. For boolean values,
+\(lq1\(rq,
+\(lqon\(rq
+and
+\(lqtrue\(rq
+are equivalent, likewise for
+\(lq0\(rq,
+\(lqoff\(rq
+and
+\(lqfalse\(rq\&. They are also case insensitive\&.
+.PP
+The root section or global section has no section name in brackets:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        \fIkey1\fR = \fIvalue1\fR
+        \fIkey2\fR = \fIvalue2\fR
+        
+        \fI[section]\fR
+            \fIkey3\fR = \fIvalue3\fR
+            \fIkey4\fR = \fIvalue4\fR
+      
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+The values set in a bracket section will override those set in the root section, in case of conflicts\&.
+.PP
+Lines starting with
+\(lq#\(rq
+or
+\(lq;\(rq
+are considered comments and ignored, as are blank lines\&.
+.PP
+The configuration file must be a regular file\&. Owner and group does not matter, but the Nagios user must have read access\&.
+.SH "SECTIONS AND ORDERING"
+.PP
+The section name should correspond to the hostname, i\&.e\&. the value passed to the
+\fB\-H\fR
+or
+\fB\-\-hostname\fR
+command line option\&. The section name itself can be either an exact match to the hostname, or a glob pattern\&.
+.PP
+The sections are read in order of significance\&. The root section is read first\&. Then any sections with glob patterns that match the hostname are read (alphabetically)\&. Any section whose name is an exact match to the hostname is read last\&.
+.PP
+For boolean values, any conflicts are resolved by letting the section with the most significance (closest match to the hostname) override any previous definitions\&. For string values, they are simply added together\&.
+.PP
+Normal shell globbing may be used for the section names\&. This is limited to
+\(lq*\(rq,
+\(lq?\(rq
+and
+\(lq[]\(rq\&. Some examples:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        [web*\&.example\&.com]
+            # matches e\&.g\&. webmail\&.example\&.com
+
+        [pgsql\-[34]\&.example\&.com]
+            # matches pgsql\-3\&.example\&.com and pgsql\-4\&.example\&.com
+
+        [login?\&.example\&.com]
+            # matches e\&.g\&. login1\&.example\&.com
+      
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+
+\fICAUTION\fR: Be careful not to have more than one glob pattern section match any single host\&. This may lead to unpredictable results\&.
+.SH "CONFIGURATION"
+.PP
+All configuration file options have a corresponding command line option\&. Usually, the command line option will override the configuration file option, if used simultaneously\&.
+.PP
+Each option is described briefly\&. For more information about syntax, legal values etc\&. refer to the corresponding command line option in
+\fBcheck_openmanage\fR(8)\&.
+.SS "Check control configuration options"
+.PP
+Any keyword to the
+\fB\-\-check\fR
+command line option are accepted in the configuration file, as
+\(lqcheck_<\fIkeyword\fR>\(rq\&. These options take boolean values (\(lqtrue\(rq
+or
+\(lqfalse\(rq)\&. The following keywords are accepted for check control, listed here with their default values:
+.PP
+\fIcheck_storage\fR
+.RS 4
+Check storage subsystem (controllers, disks etc\&.)\&. Default: TRUE
+.RE
+.PP
+\fIcheck_memory\fR
+.RS 4
+Check memory (dimms)\&. Default: TRUE
+.RE
+.PP
+\fIcheck_fans\fR
+.RS 4
+Check chassis fans\&. Default: TRUE
+.RE
+.PP
+\fIcheck_power\fR
+.RS 4
+Check power supplies\&. Default: TRUE
+.RE
+.PP
+\fIcheck_temp\fR
+.RS 4
+Check temperature sensors\&. Default: TRUE
+.RE
+.PP
+\fIcheck_cpu\fR
+.RS 4
+Check CPUs\&. Default: TRUE
+.RE
+.PP
+\fIcheck_voltage\fR
+.RS 4
+Check voltage sensors\&. Default: TRUE
+.RE
+.PP
+\fIcheck_batteries\fR
+.RS 4
+Check system batteries\&. Default: TRUE
+.RE
+.PP
+\fIcheck_amperage\fR
+.RS 4
+Check amperage probes\&. Default: TRUE
+.RE
+.PP
+\fIcheck_intrusion\fR
+.RS 4
+Check chassis intrusion\&. Default: TRUE
+.RE
+.PP
+\fIcheck_sdcard\fR
+.RS 4
+Check SD cards\&. Default: TRUE
+.RE
+.PP
+\fIcheck_esmhealth\fR
+.RS 4
+Check the ESM log health, i\&.e\&. fill grade\&. Default: TRUE
+.RE
+.PP
+\fIcheck_servicetag\fR
+.RS 4
+Check that the service tag (serial number) is sane and not empty\&. Default: TRUE
+.RE
+.PP
+\fIcheck_esmlog\fR
+.RS 4
+Check the ESM log content\&. Default: FALSE
+.RE
+.PP
+\fIcheck_alertlog\fR
+.RS 4
+Check the alert log content\&. Default: FALSE
+.RE
+.PP
+\fIcheck_everything\fR
+.RS 4
+Special option that turns on all checks\&. Setting this option to "true" will effectively negate any other check options\&. This option corresponds to the
+\fB\-a\fR
+or
+\fB\-\-all\fR
+command line option\&.
+.RE
+.PP
+If used together with the
+\fB\-\-check\fR
+command line option, the command line option will override the configuration file, if there is a conflict\&.
+.PP
+For more information about check control, see the CHECK CONTROL section in
+\fBcheck_openmanage\fR(8)\&.
+.SS "General configuration options"
+.PP
+\fIblacklist\fR (string)
+.RS 4
+Blacklist components\&. The argument is a string that uses the same syntax as the
+\fB\-b\fR
+or
+\fB\-\-blacklist\fR
+command line option\&.
+.sp
+If used together with the
+\fB\-b\fR
+or
+\fB\-\-blacklist\fR
+command line option, the two blacklists from the config file and command line are merged together\&.
+.sp
+For more information about blacklisting, including syntax, see the BLACKLISTING section in
+\fBcheck_openmanage\fR(8)\&.
+.RE
+.PP
+\fItimeout\fR (integer)
+.RS 4
+The plugin timeout\&. The argument is number of seconds and should be a positive integer\&.
+.sp
+Corresponding command line option:
+\fB\-t\fR,
+\fB\-\-timeout\fR
+.RE
+.PP
+\fIperformance_data\fR (boolean or string)
+.RS 4
+Turn on/off performance data reporting\&. Accepted values are boolean (TRUE/FALSE) or either of the keywords
+\(lqminimal\(rq
+and
+\(lqmultiline\(rq\&.
+.sp
+Corresponding command line option:
+\fB\-p\fR,
+\fB\-\-perfdata\fR
+.RE
+.PP
+\fIlegacy_performance_data\fR (boolean)
+.RS 4
+With version 3\&.7\&.0, performance data output changed\&. The new format is not compatible with the old format\&. Users who wish to postpone switching to the new performance data API may use this option\&. This option takes a boolean value\&.
+.sp
+Corresponding command line option:
+\fB\-\-legacy\-perfdata\fR
+.RE
+.PP
+\fItemperature_unit\fR (char)
+.RS 4
+The temperature unit used for reporting, performance data etc\&. can be set with the this option\&.
+.sp
+Corresponding command line option:
+\fB\-\-tempunit\fR
+.sp
+
+\fINOTE\fR: The command line option
+\fB\-F\fR
+or
+\fB\-\-fahrenheit\fR
+will override both the command line option and the configuration file option\&.
+.RE
+.PP
+\fItemp_threshold_warning\fR (string)
+.RS 4
+Custom temperature warning limits\&.
+.sp
+Corresponding command line option:
+\fB\-w\fR,
+\fB\-\-warning\fR
+.RE
+.PP
+\fItemp_threshold_critical\fR (string)
+.RS 4
+Custom temperature critical limits\&.
+.sp
+Corresponding command line option:
+\fB\-c\fR,
+\fB\-\-critical\fR
+.RE
+.PP
+\fIvdisk_critical\fR (boolean)
+.RS 4
+Make all alerts concerning virtual disks appear as critical\&.
+.sp
+Corresponding command line option:
+\fB\-\-vdisk\-critical\fR
+.RE
+.SS "SNMP configuration options"
+.PP
+Several SNMP related options may be set in the configuration file\&. The configuration file may contain the following SNMP options:
+.PP
+\fIsnmp_community\fR (string)
+.RS 4
+The SNMP community string\&.
+.sp
+Corresponding command line option:
+\fB\-C\fR,
+\fB\-\-community\fR
+.RE
+.PP
+\fIsnmp_version\fR (string)
+.RS 4
+The SNMP protocol version\&.
+.sp
+Corresponding command line option:
+\fB\-P\fR,
+\fB\-\-protocol\fR
+.RE
+.PP
+\fIsnmp_port\fR (integer)
+.RS 4
+The remote port number used with SNMP\&.
+.sp
+Corresponding command line option:
+\fB\-\-port\fR
+.RE
+.PP
+\fIsnmp_use_ipv6\fR (boolean)
+.RS 4
+Toggle using IPv6 instead of IPv4\&.
+.sp
+Corresponding command line option:
+\fB\-6\fR,
+\fB\-\-ipv6\fR
+.RE
+.PP
+\fIsnmp_use_tcp\fR (boolean)
+.RS 4
+Toggle using TCP instead of UDP as transport protocol\&.
+.sp
+Corresponding command line option:
+\fB\-\-tcp\fR
+.RE
+.PP
+\fIsnmp_timeout\fR (integer)
+.RS 4
+Set timeout in seconds for the SNMP object of Net::SNMP\&.
+.sp
+Corresponding command line option:
+\fB\-\-snmp\-timeout\fR
+.RE
+.SS "Output configuration options"
+.PP
+These options gives some control over the output given by the plugin\&.
+.PP
+\fIoutput_servicetag\fR (boolean)
+.RS 4
+Toggle inclusion of the service tag (serial number) of the monitored host in alerts\&.
+.sp
+Corresponding command line option:
+\fB\-i\fR,
+\fB\-\-info\fR
+.RE
+.PP
+\fIoutput_servicestate\fR (boolean)
+.RS 4
+Toggle inclusion of the service state in alerts\&.
+.sp
+Corresponding command line option:
+\fB\-s\fR,
+\fB\-\-state\fR
+.RE
+.PP
+\fIoutput_servicestate_abbr\fR (boolean)
+.RS 4
+Toggle inclusion of the abbreviated service state in alerts\&.
+.sp
+Corresponding command line option:
+\fB\-S\fR,
+\fB\-\-short\-state\fR
+.RE
+.PP
+\fIoutput_sysinfo\fR (boolean)
+.RS 4
+Toggle inclusion of a short system information summary in case of alerts\&.
+.sp
+Corresponding command line option:
+\fB\-e\fR,
+\fB\-\-extinfo\fR
+.RE
+.PP
+\fIoutput_blacklist\fR (boolean)
+.RS 4
+Toggle showing any blacklistings in the OK output\&.
+.sp
+Corresponding command line option:
+\fB\-B\fR,
+\fB\-\-show\-blacklist\fR
+.RE
+.PP
+\fIoutput_ok_verbosity\fR (integer)
+.RS 4
+This option specifies how much information is shown in the OK output\&.
+.sp
+Corresponding command line option:
+\fB\-o\fR,
+\fB\-\-ok\-info\fR
+.RE
+.PP
+\fIoutput_html\fR (boolean or code)
+.RS 4
+This option toggles HTML output\&. Argument is either a boolean value, or a country or area code\&. Se
+\fBcheck_openmanage\fR(8)
+for more information and list of supported country and area codes\&.
+.sp
+Corresponding command line option:
+\fB\-I\fR,
+\fB\-\-htmlinfo\fR
+.RE
+.PP
+\fIoutput_post_message\fR (string)
+.RS 4
+Specify one line of information to be shown after alerts\&.
+.sp
+Corresponding command line option:
+\fB\-\-postmsg\fR
+.RE
+.PP
+\fIoutput_hide_servicetag\fR (boolean)
+.RS 4
+This option toggles censoring of the service tag (serial number) in any output from the plugin\&.
+.sp
+Corresponding command line option:
+\fB\-\-hide\-servicetag\fR
+.RE
+.SH "EXAMPLE"
+.PP
+The following example shows a typical check_openmanage config, with a global section and a few host sections\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+# Global definitions
+output_blacklist = true
+output_ok_verbosity = 3
+output_sysinfo = true
+output_html = us
+
+# Local definitions (exact or glob pattern)
+[esx??\&.example\&.com]
+    blacklist = ctrl_fw=all
+    check_storage = false
+
+[mysql01\&.example\&.com]
+    performance_data = true
+
+[web0[123]\&.example\&.com]
+    performance_data = true
+    blacklist = ctrl_driver=all
+
+[*\&.hpc\&.example\&.com]
+    performance_data = true
+      
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.SH "SEE ALSO"
+.PP
+
+\fBcheck_openmanage\fR(8),
+http://folk\&.uio\&.no/trondham/software/check_openmanage\&.html
+.SH "AUTHORS"
+.PP
+\fBTrond Hasle Amundsen <t\&.h\&.amundsen@usit\&.uio\&.no>\fR

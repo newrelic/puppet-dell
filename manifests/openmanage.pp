@@ -59,6 +59,59 @@ class dell::openmanage (
     }
   }
 
+  # check_openmanage needs these packages
+  case $::osfamily {
+    'Debian' : {
+      package { 'libnet-snmp-perl':
+        ensure => installed,
+      }
+      package { 'libconfig-tiny-perl':
+        ensure => installed,
+      }
+    }
+    'RedHat' : {
+      package { 'perl-Net-SNMP':
+        ensure => installed,
+      }
+      package { 'perl-Config-Tiny':
+        ensure => installed,
+      }
+    }
+  }
+
+  file { '/usr/local/bin/check_openmanage':
+    ensure => 'present',
+    owner  => 'root',
+    group  => 'root',
+    mode   => '0755',
+    source => 'puppet:///modules/dell/check_openmanage',
+  }
+
+  file { '/usr/share/man/man8/check_openmanage.8':
+    ensure => 'present',
+    owner  => 'root',
+    group  => 'root',
+    mode   => '0644',
+    source => 'puppet:///modules/dell/check_openmanage.8',
+  }
+
+  file { '/usr/share/man/man5/check_openmanage.conf.5':
+    ensure => 'present',
+    owner  => 'root',
+    group  => 'root',
+    mode   => '644',
+    source => 'puppet:///modules/dell/check_openmanage.conf.5',
+  }
+
+  file { '/etc/check_openmanage.conf':
+    ensure  => 'present',
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    content => template('dell/check_openmanage.conf.erb'),
+    require => Class['logrotate::base'],
+  }
+
   if $environment != 'vagrant' {
     service { $ipmiservice:
       ensure => running,
@@ -107,4 +160,3 @@ class dell::openmanage (
     }
   }
 }
-

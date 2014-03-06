@@ -1,0 +1,961 @@
+'\" t
+.\"     Title: check_openmanage
+.\"    Author: Trond Hasle Amundsen <t.h.amundsen@usit.uio.no>
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: 08/06/2013
+.\"    Manual: Nagios plugin
+.\"    Source: check_openmanage
+.\"  Language: English
+.\"
+.TH "CHECK_OPENMANAGE" "8" "08/06/2013" "check_openmanage" "Nagios plugin"
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+check_openmanage \- Nagios plugin for checking the hardware status on Dell servers running OpenManage
+.SH "SYNOPSIS"
+.HP \w'\fBcheck_openmanage\fR\ 'u
+\fBcheck_openmanage\fR [\fIoption\fR\&.\&.\&.]
+.HP \w'\fBcheck_openmanage\fR\ 'u
+\fBcheck_openmanage\fR \-H\ \fIhostname\fR [\fIoption\fR\&.\&.\&.]
+.SH "DESCRIPTION"
+.PP
+
+\fBcheck_openmanage\fR
+is a plugin for Nagios which checks the hardware health of Dell servers running OpenManage Server Administrator (OMSA)\&. The plugin checks the health of the storage subsystem, power supplies, memory modules, temperature probes etc\&., and gives an alert if any of the components are faulty or operate outside normal parameters\&.
+.PP
+
+\fBcheck_openmanage\fR
+is designed to be used by either locally (using NRPE or similar) or remotely (using SNMP)\&. In either mode, the output is (nearly) the same\&. Note that checking the alert log is not supported in SNMP mode\&.
+.SH "GENERAL OPTIONS"
+.PP
+\fB\-f\fR, \fB\-\-config \fR\fB\fIfile\fR\fR
+.RS 4
+Specify a configuration file\&. For reference on the config file syntax and options, consult the
+\fBcheck_openmanage.conf\fR(5)
+manual page\&.
+.RE
+.PP
+\fB\-t\fR, \fB\-\-timeout \fR\fB\fIseconds\fR\fR
+.RS 4
+The number of seconds after which the plugin will abort\&. Default timeout is 30 seconds if the option is not present\&.
+.RE
+.PP
+\fB\-p\fR, \fB\-\-perfdata\fR [\fIargument\fR]
+.RS 4
+Collect performance data\&. Performance data collected include temperatures (in Celsius) and fan speeds (in rpm)\&. On systems that support it, power consumption is also collected (in Watts)\&. This option takes one of two arguments, both of which are optional:
+.PP
+\fIminimal\fR
+.RS 4
+If
+\fIminimal\fR
+is specified as argument, the plugin will use shorter names for the performance data labels, e\&.g\&.
+\(lqt0\(rq
+instead of
+\(lqtemp_0_system_board_ambient\(rq\&. This can be used as a workaround in cases where the plugin output needs shortening, for example if the 1024 character limit of NRPE is reached\&.
+.RE
+.PP
+\fImultiline\fR
+.RS 4
+If
+\fImultiline\fR
+is specified as argument, the plugin will output the performance data on multiple lines, for Nagios 3\&.x and above\&.
+.RE
+.sp
+The default behaviour should be sufficient for most users\&.
+.RE
+.PP
+\fB\-\-legacy\-perfdata\fR
+.RS 4
+With version 3\&.7\&.0, performance data output changed\&. The new format is not compatible with the old format\&. Users who wish to postpone switching to the new performance data API may set this option\&.
+.RE
+.PP
+\fB\-w\fR, \fB\-\-warning\fR \fIstring\fR | \fIfile\fR
+.RS 4
+Override the machine\-default temperature warning thresholds\&. Syntax is:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fIid1\fR=\fImax\fR[/\fImin\fR],\fIid2\fR=\fImax\fR[/\fImin\fR],\&.\&.\&.
+	    
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The following example sets warning limits to max 50C for probe 0, and max 45C and min 10C for probe 1:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+check_openmanage \-w 0=50,1=45/10
+	    
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The minimum limit can be omitted, if desired\&. Most often, you are only interested in setting the maximum thresholds\&.
+.sp
+This parameter can be either a string with the limits, or a file containing the limits string\&. The option can be specified multiple times\&.
+.sp
+
+\fINOTE\fR: This option should only be used to narrow the field of OK temperatures wrt\&. the OMSA defaults\&. To expand the field of OK temperatures, increase the OMSA thresholds\&. See the plugin web page for more information\&.
+.RE
+.PP
+\fB\-c\fR, \fB\-\-critical\fR \fIstring\fR | \fIfile\fR
+.RS 4
+Override the machine\-default temperature critical thresholds\&. Syntax and behaviour is the same as for warning thresholds described above\&.
+.RE
+.PP
+\fB\-F\fR, \fB\-\-fahrenheit\fR
+.RS 4
+Set Fahrenheit as unit for all temperatures\&. This option will override the
+\fB\-\-tempunit\fR
+option, if used simultaneously\&.
+.RE
+.PP
+\fB\-\-tempunit\fR \fIunit\fR
+.RS 4
+Set temperature unit\&. Legal values are:
+.sp
+\fIF\fR: Fahrenheit
+.sp
+\fIC\fR: Celsius
+.sp
+\fIK\fR: Kelvin
+.sp
+\fIR\fR: Rankine
+.sp
+Default: C
+.RE
+.PP
+\fB\-\-omreport\fR \fIpath\fR
+.RS 4
+Specify full path to omreport, if it is not installed in any of the regular places\&. Usually this option is only needed on Windows, if omreport is not installed on the C: drive\&.
+.RE
+.PP
+\fB\-\-vdisk\-critical\fR
+.RS 4
+Make any alerts concerning virtual disks appear as critical\&.
+.RE
+.PP
+\fB\-d\fR, \fB\-\-debug\fR
+.RS 4
+Debug output\&. Will report status on everything, even if status is ok\&. Blacklisted or unchecked components are ignored (i\&.e\&. no output)\&.
+.sp
+
+\fINOTE\fR: This option is intended for diagnostics and debugging purposes only\&. Do not use this option from within Nagios, i\&.e\&. in the Nagios config\&.
+.RE
+.PP
+\fB\-h\fR, \fB\-\-help\fR
+.RS 4
+Display help message and exit\&.
+.RE
+.PP
+\fB\-V\fR, \fB\-\-version\fR
+.RS 4
+Print version info and exit\&.
+.RE
+.SH "OUTPUT OPTIONS"
+.PP
+\fB\-o\fR, \fB\-\-ok\-info\fR \fIlevel\fR
+.RS 4
+This option lets you define how much output you want the plugin to give when everything is OK, i\&.e\&. the verbosity level\&. The default value is 0 (one line of output)\&. The output levels are cumulative\&.
+.sp
+
+\fI0\fR: Only one line
+.sp
+
+\fI1\fR: BIOS and firmware info on a separate line
+.sp
+
+\fI2\fR: Storage controller and enclosure info on separate lines
+.sp
+
+\fI3\fR: OMSA version on separate line
+.sp
+Default: 0
+.sp
+The reason that OMSA version is separated from the rest is that finding it requires running a really slow omreport command, when the plugin is run locally via NRPE\&.
+.RE
+.PP
+\fB\-B\fR, \fB\-\-show\-blacklist\fR
+.RS 4
+If used together with blacklisting, this option will make the plugin output all blacklistings that are being used\&. The output will have the correct blacklisting syntax, and will make it easy to maintain control over which blacklistings that are used for each server, as any blacklistings can be viewed from Nagios\&.
+.sp
+When blacklisting is not used, this option has no effect\&.
+.RE
+.PP
+\fB\-i\fR, \fB\-\-info\fR
+.RS 4
+Prefix any alerts with the service tag\&.
+.RE
+.PP
+\fB\-e\fR, \fB\-\-extinfo\fR
+.RS 4
+Display a short summary of system information (model and service tag) in case of an alert\&.
+.RE
+.PP
+\fB\-I\fR, \fB\-\-htmlinfo\fR [\fIcode\fR]
+.RS 4
+Using this option will make the servicetag and model name into clickable HTML links in the output\&. The model name link will point to the official Dell documentation for that model, while the servicetag link will point to a website containing support info for that particular server\&.
+.sp
+This option takes an optional argument, which should be a country or area code or\&. If the country code is omitted the servicetag link will still work, but it will not be speficic for your country or area\&. Example for Germany:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+check_openmanage \-\-htmlinfo de
+	    
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If this option is used together with either the
+\fB\-\-extinfo\fR
+or
+\fB\-\-info\fR
+options, it is particularly useful\&. Only the most common country codes is supported at this time:
+.TS
+expand tab(:);
+l s s
+l l l
+l l l
+l l l
+l l l
+l l l
+l l l
+l l l
+l s s
+l s s
+l l l
+l l l
+l s s
+l s s
+l l l
+l l l.
+T{
+Europe, Middle East and Africa (EMEA)
+T}
+T{
+\fIat\fR: Austria
+T}:T{
+\fIbe\fR: Belgium
+T}:T{
+\fIcz\fR: Czech Republic
+T}
+T{
+\fIde\fR: Germany
+T}:T{
+\fIdk\fR: Denmark
+T}:T{
+\fIes\fR: Spain
+T}
+T{
+\fIfi\fR: Finland
+T}:T{
+\fIfr\fR: France
+T}:T{
+\fIgr\fR: Greece
+T}
+T{
+\fIit\fR: Italy
+T}:T{
+\fIil\fR: Israel
+T}:T{
+\fIme\fR: Middle East
+T}
+T{
+\fIno\fR: Norway
+T}:T{
+\fInl\fR: The Netherlands
+T}:T{
+\fIpl\fR: Poland
+T}
+T{
+\fIpt\fR: Portugal
+T}:T{
+\fIru\fR: Russia
+T}:T{
+\fIse\fR: Sweden
+T}
+T{
+\fIuk\fR: United Kingdom
+T}:T{
+\fIza\fR: South Africa
+T}:T{
+
+T}
+T{
+\ \&
+T}
+T{
+America
+T}
+T{
+\fIbr\fR: Brazil
+T}:T{
+\fIca\fR: Canada
+T}:T{
+\fImx\fR: Mexico
+T}
+T{
+\fIus\fR: USA
+T}:T{
+
+T}:T{
+
+T}
+T{
+\ \&
+T}
+T{
+Asia / Pacific
+T}
+T{
+\fIau\fR: Australia
+T}:T{
+\fIcn\fR: China
+T}:T{
+\fIin\fR: India
+T}
+T{
+\fIjp\fR: Japan
+T}:T{
+
+T}:T{
+
+T}
+.TE
+.sp 1
+.RE
+.PP
+\fB\-\-postmsg\fR \fIstring\fR | \fIfile\fR
+.RS 4
+User specified post message\&. Useful for displaying arbitrary or various system information at the end of alerts\&. The argument is either a string with the message, or a file containing that string\&. You can control the format with the following interpreted sequences:
+.sp
+
+\fI%m\fR: System model
+.sp
+
+\fI%s\fR: Service tag
+.sp
+
+\fI%b\fR: BIOS version
+.sp
+
+\fI%d\fR: BIOS release date
+.sp
+
+\fI%o\fR: Operating system name
+.sp
+
+\fI%r\fR: Operating system release
+.sp
+
+\fI%p\fR: Number of physical drives
+.sp
+
+\fI%l\fR: Number of logical drives
+.sp
+
+\fI%n\fR: Line break\&. Will be a regular line break if run from a TTY, else an HTML line break\&.
+.sp
+
+\fI%%\fR: A literal
+\(lq%\(rq
+.RE
+.PP
+\fB\-s\fR, \fB\-\-state\fR
+.RS 4
+Prefix each alert with its corresponding service state (i\&.e\&. warning, critical etc\&.)\&. This is useful in case of several alerts from the same monitored system\&.
+.RE
+.PP
+\fB\-S\fR, \fB\-\-short\-state\fR
+.RS 4
+Same as the
+\fB\-\-state\fR
+option above, except that the state is abbreviated to a single letter (\fIW\fR=warning,
+\fIC\fR=critical etc\&.)\&.
+.RE
+.PP
+\fB\-\-hide\-servicetag\fR
+.RS 4
+This option will replace the servicetag (serial number) in the output with
+\(lqXXXXXXX\(rq\&. Use this option to suppress or censor the servicetag in the plugin output\&.
+.RE
+.PP
+\fB\-\-linebreak\fR \fIstring\fR
+.RS 4
+check_openmanage will sometimes report more than one line, e\&.g\&. if there are several alerts\&. If the script has a TTY, it will use regular linebreaks\&. If not (which is the case with NRPE) it will use HTML linebreaks\&. Sometimes it can be useful to control what the plugin uses as a line separator, and this option provides that control\&.
+.sp
+The argument is the exact string to be used as the line separator\&. There are two exceptions, i\&.e\&. two keywords that translates to the following:
+.sp
+
+\fIREG\fR: Regular linebreaks, i\&.e\&.
+\(lq\en\(rq\&.
+.sp
+
+\fIHTML\fR: HTML linebreaks, i\&.e\&.
+\(lq<br/>\(rq\&.
+.sp
+This is a rather special option that is normally not needed\&. The default behaviour should be sufficient for most users\&.
+.RE
+.SH "SNMP OPTIONS"
+.PP
+\fB\-H\fR, \fB\-\-hostname \fR\fB\fIhostname\fR\fR
+.RS 4
+The transport address of the destination SNMP device\&. Using this option triggers SNMP mode\&.
+.RE
+.PP
+\fB\-P\fR, \fB\-\-protocol\fR \fIprotocol\-number\fR
+.RS 4
+SNMP protocol version\&. This option is optional and expects either of the following:
+.sp
+\fI1\fR: SNMP version 1
+.sp
+\fI2\fR,
+\fI2c\fR: SNMP version 2c
+.sp
+\fI3\fR: SNMP version 3
+.sp
+Default: 2c
+.RE
+.PP
+\fB\-\-port\fR \fIport\-number\fR
+.RS 4
+SNMP port of the remote (monitored) system\&. Defaults to the well\-known SNMP port 161\&.
+.RE
+.PP
+\fB\-6\fR, \fB\-\-ipv6\fR
+.RS 4
+This option will cause the plugin to use IPv6\&. The default is IPv4 if the option is not present\&.
+.RE
+.PP
+\fB\-\-tcp\fR
+.RS 4
+This option will cause the plugin to use TCP as transport protocol\&. The default is UDP if the option is not present\&.
+.RE
+.PP
+\fB\-\-snmp\-timeout\fR \fIseconds\fR
+.RS 4
+This option sets the timeout for the SNMP object of the Net::SNMP perl module\&. Legal values are between 1 and 60 seconds, and the default is 5 seconds if the option is not present\&. Note that there is one retry (with the same timeout) before the SNMP object times out completely\&. For an unresponsive SNMP server, you\'ll see that the plugin times out with an SNMP error after 10 seconds if the 5 second default is used\&.
+.sp
+This option is usually not needed\&. The default timeout of 5 seconds is more than sufficient in most cases\&.
+.RE
+.PP
+\fB\-U\fR, \fB\-\-username\fR \fIsecurityname\fR
+.RS 4
+[SNMPv3] The User\-based Security Model (USM) used by SNMPv3 requires that a securityName be specified\&. This option is required when using SNMP version 3, and expects a string 1 to 32 octets in lenght\&.
+.RE
+.PP
+\fB\-\-authpassword\fR \fIpassword\fR, \fB\-\-authkey\fR \fIkey\fR
+.RS 4
+[SNMPv3] By default a securityLevel of
+\fInoAuthNoPriv\fR
+is assumed\&. If the
+\fB\-\-authpassword\fR
+option is specified, the securityLevel becomes
+\fIauthNoPriv\fR\&. The
+\fB\-\-authpassword\fR
+option expects a string which is at least 1 octet in length as argument\&.
+.sp
+Optionally, instead of the
+\fB\-\-authpassword\fR
+option, the
+\fB\-\-authkey\fR
+option can be used so that a plain text password does not have to be specified in a script\&. The
+\fB\-\-authkey\fR
+option expects a hexadecimal string produced by localizing the password with the authoritativeEngineID for the specific destination device\&. The
+\fBsnmpkey\fR
+utility included with the Net::SNMP distribution can be used to create the hexadecimal string\&. See
+\fBsnmpkey\fR(1)
+for more information\&.
+.RE
+.PP
+\fB\-\-authprotocol\fR \fIalgorithm\fR
+.RS 4
+[SNMPv3] Two different hash algorithms are defined by SNMPv3 which can be used by the Security Model for authentication\&. These algorithms are HMAC\-MD5\-96
+\(lqMD5\(rq
+(RFC 1321) and HMAC\-SHA\-96
+\(lqSHA\-1\(rq
+(NIST FIPS PUB 180\-1)\&. The default algorithm used by the plugin is HMAC\-MD5\-96\&. This behavior can be changed by using this option\&. The option expects either the string
+\fImd5\fR
+or
+\fIsha\fR
+to be passed as argument to modify the hash algorithm\&.
+.RE
+.PP
+\fB\-\-privpassword\fR \fIpassword\fR, \fB\-\-privkey\fR \fIkey\fR
+.RS 4
+[SNMPv3] By specifying the options
+\fB\-\-privkey\fR
+or
+\fB\-\-privpassword\fR, the securityLevel associated with the object becomes
+\fIauthPriv\fR\&. According to SNMPv3, privacy requires the use of authentication\&. Therefore, if either of these two options are present and the
+\fB\-\-authkey\fR
+or
+\fB\-\-authpassword\fR
+arguments are missing, the creation of the object fails\&. The
+\fB\-\-privkey\fR
+and
+\fB\-\-privpassword\fR
+options expect the same input as the
+\fB\-\-authkey\fR
+and
+\fB\-\-authpassword\fR
+options respectively\&.
+.RE
+.PP
+\fB\-\-privprotocol\fR \fIalgorithm\fR
+.RS 4
+[SNMPv3] The User\-based Security Model described in RFC 3414 defines a single encryption protocol to be used for privacy\&. This protocol, CBC\-DES
+\(lqDES\(rq
+(NIST FIPS PUB 46\-1), is used by default or if the string
+\fIdes\fR
+is passed to the
+\fB\-\-privprotocol\fR
+option\&. The Net::SNMP module also supports RFC 3826 which describes the use of CFB128\-AES\-128
+\(lqAES\(rq
+(NIST FIPS PUB 197) in the USM\&. The AES encryption protocol can be selected by passing
+\fIaes\fR
+or
+\fIaes128\fR
+to the
+\fB\-\-privprotocol\fR
+option\&.
+.sp
+One of the following arguments are required: des, aes, aes128, 3des, 3desde
+.RE
+.PP
+\fB\-\-use\-get_table\fR
+.RS 4
+This option exists as a workaround when using check_openmanage with SNMPv3 on Windows with net\-snmp\&. Using this option will make check_openmanage use the Net::SNMP function get_table() instead of get_entries() while fetching values via SNMP\&. The latter is faster and is the default\&.
+.RE
+.SH "BLACKLISTING"
+.PP
+\fB\-b\fR, \fB\-\-blacklist\fR \fIstring\fR | \fIfile\fR
+.RS 4
+Blacklist missing and/or failed components, if you do not plan to fix them\&. The parameter is either the blacklist string, or a file (that may or may not exist) containing the string\&. The blacklist string contains component names with component IDs separated by slash
+\(lq/\(rq\&. Blacklisted components are left unchecked\&.
+.sp
+
+\fITIP\fR: Use the option
+\fB\-d\fR
+or
+\fB\-\-debug\fR
+to get the blacklist ID for devices\&. The ID is listed in a separate column in the debug output\&.
+.sp
+
+\fINOTE\fR: If blacklisting is in effect, the global health of the system is not checked\&.
+.sp
+Syntax:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fIcomponent1\fR=\fIid1\fR[,\fIid2\fR,\&.\&.\&.]/\fIcomponent2\fR=\fIid1\fR[,\fIid2\fR,\&.\&.\&.]/\&.\&.\&.
+	    
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The ID part can also be
+\(lqall\(rq, in which all components of that type is blacklisted\&.
+.sp
+Example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+check_openmanage \-b ps=0/fan=3,5/pdisk=1:0:0:1/ctrl_driver=all
+	    
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+In the example we blacklist powersupply 0, fans 3 and 5, physical disk 1:0:0:1, and warnings about out\-of\-date drivers for all controllers\&. Legal component names include:
+.PP
+\fIctrl\fR
+.RS 4
+Storage controller\&. Note that if a controller is blacklisted, all components on that controller (such as physical and logical drives) are blacklisted as well\&.
+.RE
+.PP
+\fIctrl_fw\fR
+.RS 4
+Suppress the special warning message about old controller firmware\&. Use this if you can not or will not upgrade the firmware\&.
+.RE
+.PP
+\fIctrl_driver\fR
+.RS 4
+Suppress the special warning message about old controller driver\&. Particularly useful on systems where you can not upgrade the driver\&.
+.RE
+.PP
+\fIctrl_stdr\fR
+.RS 4
+Suppress the special warning message about old Storport driver on Windows\&.
+.RE
+.PP
+\fIctrl_pdisk\fR
+.RS 4
+This blacklisting keyword exists as a possible workaround for physical drives with bad firmware which makes Openmanage choke\&. It takes the controller number as argument\&. Use this option to blacklist all physical drives on a specific controller\&. This blacklisting keyword is only available in local mode, i\&.e\&. not with SNMP\&.
+.RE
+.PP
+\fIpdisk\fR
+.RS 4
+Physical disk\&.
+.RE
+.PP
+\fIpdisk_cert\fR
+.RS 4
+Suppress warning message about non\-certified physical disk\&.
+.RE
+.PP
+\fIpdisk_foreign\fR
+.RS 4
+Suppress warning message about foreign physical disk\&.
+.RE
+.PP
+\fIvdisk\fR
+.RS 4
+Logical drive (virtual disk)\&.
+.RE
+.PP
+\fIbat\fR
+.RS 4
+Controller cache battery\&.
+.RE
+.PP
+\fIbat_charge\fR
+.RS 4
+Ignore warnings related to the controller cache battery charging cycle, which happens approximately every 40\-90 days on Dell servers\&. Note that using this blacklist keyword makes check_openmanage ignore non\-critical cache battery errors\&.
+.RE
+.PP
+\fIconn\fR
+.RS 4
+Connector (channel)\&.
+.RE
+.PP
+\fIencl\fR
+.RS 4
+Storage enclosure\&.
+.RE
+.PP
+\fIencl_fan\fR
+.RS 4
+Enclosure fan\&.
+.RE
+.PP
+\fIencl_ps\fR
+.RS 4
+Enclosure power supply\&.
+.RE
+.PP
+\fIencl_temp\fR
+.RS 4
+Enclosure temperature probe\&.
+.RE
+.PP
+\fIencl_emm\fR
+.RS 4
+Enclosure management module (EMM)\&.
+.RE
+.PP
+\fIdimm\fR
+.RS 4
+Memory module\&.
+.RE
+.PP
+\fIfan\fR
+.RS 4
+Chassis fan\&.
+.RE
+.PP
+\fIps\fR
+.RS 4
+Power supply\&.
+.RE
+.PP
+\fItemp\fR
+.RS 4
+Temperature sensor\&.
+.RE
+.PP
+\fIcpu\fR
+.RS 4
+Processor (CPU)\&.
+.RE
+.PP
+\fIvolt\fR
+.RS 4
+Voltage probe\&.
+.RE
+.PP
+\fIbp\fR
+.RS 4
+System battery\&.
+.RE
+.PP
+\fIamp\fR
+.RS 4
+Amperage probe (power consumption monitoring)\&.
+.RE
+.PP
+\fIintr\fR
+.RS 4
+Intrusion detection sensor\&.
+.RE
+.PP
+\fIsd\fR
+.RS 4
+SD card
+.RE
+.sp
+.RE
+.SH "CHECK CONTROL"
+.PP
+\fB\-\-no\-storage\fR
+.RS 4
+Turn off storage checking\&. This is an alias for
+\(lq\-\-check storage=0\(rq\&.
+.RE
+.PP
+\fB\-\-only\fR \fIkeyword\fR
+.RS 4
+Makes check_openmanage check and/or report on a single class of components or warning level\&. This option can be specifed once and expects an argument\&. The different arguments and the corresponding behaviour are described below\&.
+.PP
+\fIcritical\fR
+.RS 4
+Print only critical alerts\&. With this option any warning alerts are suppressed\&.
+.RE
+.PP
+\fIwarning\fR
+.RS 4
+Print only warning alerts\&. With this option any critical alerts are suppressed\&.
+.RE
+.PP
+\fIchassis\fR
+.RS 4
+Check all chassis components and nothing else\&.
+.RE
+.PP
+\fIstorage\fR
+.RS 4
+Only check storage
+.RE
+.PP
+\fImemory\fR
+.RS 4
+Only check memory modules
+.RE
+.PP
+\fIfans\fR
+.RS 4
+Only check fans
+.RE
+.PP
+\fIpower\fR
+.RS 4
+Only check power supplies
+.RE
+.PP
+\fItemp\fR
+.RS 4
+Only check temperatures
+.RE
+.PP
+\fIcpu\fR
+.RS 4
+Only check processors
+.RE
+.PP
+\fIvoltage\fR
+.RS 4
+Only check voltage probes
+.RE
+.PP
+\fIbatteries\fR
+.RS 4
+Only check batteries
+.RE
+.PP
+\fIamperage\fR
+.RS 4
+Only check power usage
+.RE
+.PP
+\fIintrusion\fR
+.RS 4
+Only check chassis intrusion
+.RE
+.PP
+\fIsdcard\fR
+.RS 4
+Only check SD cards
+.RE
+.PP
+\fIesmhealth\fR
+.RS 4
+Only check ESM log overall health, i\&.e\&. fill grade
+.RE
+.PP
+\fIservicetag\fR
+.RS 4
+Only check for sane service tag
+.RE
+.PP
+\fIesmlog\fR
+.RS 4
+Only check the event log (ESM) content
+.RE
+.PP
+\fIalertlog\fR
+.RS 4
+Only check the alert log content
+.RE
+.sp
+.RE
+.PP
+\fB\-\-check\fR \fIstring\fR | \fIfile\fR
+.RS 4
+This parameter allows you to adjust which components that should be checked at all\&. This is a rougher approach than blacklisting, which require that you specify component id or index\&. The parameter should be either a string containing the adjustments, or a file containing the string\&. No errors are raised if the file does not exist\&.
+.sp
+Example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+check_openmanage \-\-check storage=0,intrusion=1
+	    
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Legal values are described below, along with the default value\&.
+.PP
+\fIstorage\fR
+.RS 4
+Check storage subsystem (controllers, disks etc\&.)\&. Default: ON
+.RE
+.PP
+\fImemory\fR
+.RS 4
+Check memory (dimms)\&. Default: ON
+.RE
+.PP
+\fIfans\fR
+.RS 4
+Check chassis fans\&. Default: ON
+.RE
+.PP
+\fIpower\fR
+.RS 4
+Check power supplies\&. Default: ON
+.RE
+.PP
+\fItemp\fR
+.RS 4
+Check temperature sensors\&. Default: ON
+.RE
+.PP
+\fIcpu\fR
+.RS 4
+Check CPUs\&. Default: ON
+.RE
+.PP
+\fIvoltage\fR
+.RS 4
+Check voltage sensors\&. Default: ON
+.RE
+.PP
+\fIbatteries\fR
+.RS 4
+Check system batteries\&. Default: ON
+.RE
+.PP
+\fIamperage\fR
+.RS 4
+Check amperage probes\&. Default: ON
+.RE
+.PP
+\fIintrusion\fR
+.RS 4
+Check chassis intrusion\&. Default: ON
+.RE
+.PP
+\fIsdcard\fR
+.RS 4
+Check SD cards\&. Default: ON
+.RE
+.PP
+\fIesmhealth\fR
+.RS 4
+Check the ESM log health, i\&.e\&. fill grade\&. Default: ON
+.RE
+.PP
+\fIservicetag\fR
+.RS 4
+Check that the service tag (serial number) is sane and not empty\&. Default: ON
+.RE
+.PP
+\fIesmlog\fR
+.RS 4
+Check the ESM log content\&. Default: OFF
+.RE
+.PP
+\fIalertlog\fR
+.RS 4
+Check the alert log content\&. Default: OFF
+.RE
+.sp
+.RE
+.SH "DIAGNOSTICS"
+.PP
+The option
+\fB\-d\fR
+or
+\fB\-\-debug\fR
+can be specified to display all monitored components\&.
+.SH "EXIT STATUS"
+.PP
+If no errors are discovered, a value of 0 (OK) is returned\&. An exit value of 1 (WARNING) signifies one or more non\-critical errors, while 2 (CRITICAL) signifies one or more critical errors\&.
+.PP
+The exit value 3 (UNKNOWN) is reserved for errors within the script, or errors getting values from Dell OMSA\&.
+.SH "BUGS AND LIMITATIONS"
+.PP
+Storage info is not collected or checked on very old PowerEdge models and/or old OMSA versions, due to limitations in OMSA\&. The overall support on those models/versions by this plugin is not well tested\&.
+.SH "LICENSE AND COPYRIGHT"
+.PP
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version\&.
+.PP
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE\&. See the GNU General Public License for more details\&.
+.PP
+You should have received a copy of the GNU General Public License along with this program\&. If not, see http://www\&.gnu\&.org/licenses/\&.
+.SH "SEE ALSO"
+.PP
+
+\fBcheck_openmanage.conf\fR(5),
+\fBNet::SNMP\fR(3),
+http://folk\&.uio\&.no/trondham/software/check_openmanage\&.html
+.SH "AUTHORS"
+.PP
+\fBTrond Hasle Amundsen <t\&.h\&.amundsen@usit\&.uio\&.no>\fR

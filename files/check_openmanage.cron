@@ -5,5 +5,10 @@
 
 # Run and log check_openmanage
 OUT=`/usr/local/bin/check_openmanage -s -i --linebreak "<br/>" --all --vdisk-critical`
+
+# Single quotes and parens are problematic in our awk. Remove them.
+OUT=`echo "${OUT}" | tr "['()]" "_"`
+
 echo `date` &> /var/log/check_openmanage.out
-echo "${OUT}" | awk 'BEGIN {FS="<br/>"} {for(i=1;i<=NF;i++)system("logger -f /var/log/messages -p user.warning -t check_openmanage '" $i "'")system("echo '" $i "' &>> /var/log/check_openmanage.out")}'
+
+echo "${OUT}" | awk 'BEGIN {FS="<br/>"} {for(i=1;i<=NF;i++)system("logger -f /var/log/messages -p user.warning -t check_openmanage " $i )system("echo " $i " &>> /var/log/check_openmanage.out")}'

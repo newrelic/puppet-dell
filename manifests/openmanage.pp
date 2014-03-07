@@ -112,6 +112,11 @@ class dell::openmanage (
     require => Class['logrotate::base'],
   }
 
+  file { '/etc/cron.hourly/check_openmanage':
+    source => 'puppet:///modules/dell/check_openmanage.cron',
+    mode   => '0755',
+  }
+
   if $environment != 'vagrant' {
     service { $ipmiservice:
       ensure => running,

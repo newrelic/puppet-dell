@@ -68,12 +68,18 @@ class dell::openmanage (
       package { 'libconfig-tiny-perl':
         ensure => installed,
       }
+      package { 'libxslt1.1':
+        ensure => installed,
+      }
     }
     'RedHat' : {
       package { 'perl-Net-SNMP':
         ensure => installed,
       }
       package { 'perl-Config-Tiny':
+        ensure => installed,
+      }
+      package { 'libxslt':
         ensure => installed,
       }
     }

@@ -118,7 +118,15 @@ class dell::openmanage (
     require => Class['logrotate::base'],
   }
 
+  # This can be removed sometime after 20140310
   file { '/etc/cron.hourly/check_openmanage':
+    ensure => 'absent',
+    source => 'puppet:///modules/dell/check_openmanage.cron',
+    mode   => '0755',
+  }
+
+  file { '/etc/cron.daily/check_openmanage':
+    ensure => 'present',
     source => 'puppet:///modules/dell/check_openmanage.cron',
     mode   => '0755',
   }

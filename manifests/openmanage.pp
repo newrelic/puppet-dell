@@ -68,8 +68,10 @@ class dell::openmanage (
       package { 'libconfig-tiny-perl':
         ensure => installed,
       }
-      package { 'libxslt1.1':
-        ensure => installed,
+      if ! defined(Package['libxslt1.1']) {
+        package { 'libxslt1.1':
+          ensure => installed,
+        }
       }
     }
     'RedHat' : {
@@ -79,8 +81,10 @@ class dell::openmanage (
       package { 'perl-Config-Tiny':
         ensure => installed,
       }
-      package { 'libxslt':
-        ensure => installed,
+      if ! defined(Package['libxslt']) {
+        package { 'libxslt':
+          ensure => installed,
+        }
       }
     }
   }

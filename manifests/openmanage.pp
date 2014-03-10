@@ -115,7 +115,6 @@ class dell::openmanage (
     group   => 'root',
     mode    => '0644',
     content => template('dell/check_openmanage.conf.erb'),
-    require => Class['logrotate::base'],
   }
 
   # This can be removed sometime after 20140310

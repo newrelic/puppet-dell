@@ -59,33 +59,27 @@ class dell::openmanage (
     }
   }
 
+  # WSMAN is used for BIOS configuration
+  case $::osfamily {
+    'Debian' : {
+      $packages = ['curl', 'xmllint', 'coreutils', 'wsl']
+      ensure_packages($packages)
+    }
+    'RedHat' : {
+      $packages = ['wsmancli']
+      ensure_packages($packages)
+    }
+  }
+
   # check_openmanage needs these packages
   case $::osfamily {
     'Debian' : {
-      package { 'libnet-snmp-perl':
-        ensure => installed,
-      }
-      package { 'libconfig-tiny-perl':
-        ensure => installed,
-      }
-      if ! defined(Package['libxslt1.1']) {
-        package { 'libxslt1.1':
-          ensure => installed,
-        }
-      }
+      $packages = ['libnet-snmp-perl', 'libconfig-tiny-perl', 'libxslt1.1']
+      ensure_packages($packages)
     }
     'RedHat' : {
-      package { 'perl-Net-SNMP':
-        ensure => installed,
-      }
-      package { 'perl-Config-Tiny':
-        ensure => installed,
-      }
-      if ! defined(Package['libxslt']) {
-        package { 'libxslt':
-          ensure => installed,
-        }
-      }
+      $packages = ['perl-Net-SNMP', 'perl-Config-Tiny', 'libxslt']
+      ensure_packages($packages)
     }
   }
 

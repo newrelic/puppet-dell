@@ -62,24 +62,24 @@ class dell::openmanage (
   # WSMAN is used for BIOS configuration
   case $::osfamily {
     'Debian' : {
-      $packages = ['curl', 'xmllint', 'coreutils', 'wsl']
-      ensure_packages($packages)
+      $wsman_packages = ['curl', 'xmllint', 'coreutils', 'wsl']
+      ensure_packages($wsman_packages)
     }
     'RedHat' : {
-      $packages = ['wsmancli']
-      ensure_packages($packages)
+      $wsman_packages = ['wsmancli']
+      ensure_packages($wsman_packages)
     }
   }
 
   # check_openmanage needs these packages
   case $::osfamily {
     'Debian' : {
-      $packages = ['libnet-snmp-perl', 'libconfig-tiny-perl', 'libxslt1.1']
-      ensure_packages($packages)
+      $checkom_packages = ['libnet-snmp-perl', 'libconfig-tiny-perl', 'libxslt1.1']
+      ensure_packages($checkom_packages)
     }
     'RedHat' : {
-      $packages = ['perl-Net-SNMP', 'perl-Config-Tiny', 'libxslt']
-      ensure_packages($packages)
+      $checkom_packages = ['perl-Net-SNMP', 'perl-Config-Tiny', 'libxslt']
+      ensure_packages($checkom_packages)
     }
   }
 

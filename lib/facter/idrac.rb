@@ -17,10 +17,19 @@ module Facter::Drac
     case Facter.value(:kernel)
     when 'Linux'
       return nil unless FileTest.exists?("/opt/dell/srvadmin/sbin/racadm")
-      output=%x{/opt/dell/srvadmin/sbin/racadm getconfig -g #{group} 2>/dev/null}
+
+      begin
+        Timeout::timeout(10) do
+          output = %x{/opt/dell/srvadmin/sbin/racadm getconfig -g #{group} 2>/dev/null}
+        end
+      rescue Timeout::Error
+        output = nil
+      end
+
     else
-      output=nil
+      output = nil
     end
+
     return output
   end
 

@@ -30,9 +30,11 @@ class dell::firmware(
       }
     }
     'RedHat' : {
-      package { 'dell_ft_install':
-        ensure  => $ensure,
-        require => Class['dell::repos'],
+      if $::operatingsystemmajrelease < 7 {
+        package { 'dell_ft_install':
+          ensure  => $ensure,
+          require => Class['dell::repos'],
+        }
       }
     }
   }

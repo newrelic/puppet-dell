@@ -47,7 +47,7 @@ class dell::openmanage (
             ensure     => 'running',
             hasrestart => true,
             hasstatus  => true,
-            require    => Package['srvadmin-deng'],
+            require    => [ Package['srvadmin-deng'], Exec['IGNORE_GENERATION'] ],
           }
         }
       } else {

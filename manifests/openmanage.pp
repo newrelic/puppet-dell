@@ -47,7 +47,7 @@ class dell::openmanage (
       } else {
         exec { "IGNORE_GENERATION":
           cwd     => "/var/tmp",
-          command => "touch /opt/dell/srvadmin/lib64/openmanage/IGNORE_GENERATION",
+          command => "mkdir -p /opt/dell/srvadmin/lib64/openmanage && touch /opt/dell/srvadmin/lib64/openmanage/IGNORE_GENERATION",
           creates => "/opt/dell/srvadmin/lib64/openmanage/IGNORE_GENERATION",
           path    => ["/bin", "/usr/bin"]
         }

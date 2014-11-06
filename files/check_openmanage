@@ -246,7 +246,7 @@ if ($opt{version}) {
 	   'amperage'    => 1,   # check power consumption
 	   'intrusion'   => 1,   # check intrusion detection
 	   'sdcard'      => 1,   # check removable flash media (SD cards)
-	   'alertlog'    => 0,   # check the alert log
+	   'alertlog'    => 1,   # check the alert log
 	   'esmlog'      => 0,   # check the ESM log (hardware log)
 	   'esmhealth'   => 1,   # check the ESM log overall health
 	   'servicetag'  => 1,   # check that the servicetag is sane
@@ -4587,11 +4587,16 @@ sub check_sdcard {
 #-----------------------------------------
 # CHASSIS: Check alert log
 #-----------------------------------------
+
 sub check_alertlog {
     return if $snmp; # Not supported with SNMP
 
     my @output = @{ run_omreport("$omopt_system alertlog") };
     foreach my $out (@output) {
+        if ($out->{Description} =~ /Sense key:\s+(\d+)\s+Sense code:\s+(\d+)\s+Sense qualifier:\s+(\d+):\s+(.*?)$/
+		&& ($1 == 6) && ($2 == 29)) {
+		$out->{Severity} = 'Critical'
+	}
 	++$count{alert}{$out->{Severity}};
     }
 

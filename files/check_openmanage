@@ -111,6 +111,7 @@ CHECK CONTROL AND BLACKLISTING:
    --check              Fine-tune which components are checked
    --no-storage         Don't check storage
    --vdisk-critical     Make any alerts on virtual disks critical
+   --ignore-uncertified Don't alert if drives are uncertified
 
 For more information and advanced options, see the manual page or URL:
   http://folk.uio.no/trondham/software/check_openmanage.html
@@ -171,6 +172,7 @@ END_LICENSE
          'use_get_table'     => 0,        # hack for SNMPv3 on Windows with net-snmp
 	 'hide_servicetag'   => 0,        # hidden servicetag
 	 'vdisk_critical'    => 0,        # make vdisk alerts critical
+   'ignore_uncertified' => 1,       # don't check if drives are certified
        );
 
 # Get options
@@ -217,6 +219,7 @@ GetOptions('b|blacklist=s'      => \@{ $opt{blacklist} },
            'use-get_table'      => \$opt{use_get_table},
 	   'hide-servicetag'    => \$opt{hide_servicetag},
 	   'vdisk-critical'     => \$opt{vdisk_critical},
+            'ignore-uncertified!' => \$opt{ignore_uncertified},
 	  ) or do { print $USAGE; exit $E_UNKNOWN };
 
 # If user requested help
@@ -246,7 +249,8 @@ if ($opt{version}) {
 	   'amperage'    => 1,   # check power consumption
 	   'intrusion'   => 1,   # check intrusion detection
 	   'sdcard'      => 1,   # check removable flash media (SD cards)
-	   'alertlog'    => 1,   # check the alert log
+     'sensekey'    => 0,   # chekc for sense key errors 
+	   'alertlog'    => 0,   # check the alert log
 	   'esmlog'      => 0,   # check the ESM log (hardware log)
 	   'esmhealth'   => 1,   # check the ESM log overall health
 	   'servicetag'  => 1,   # check that the servicetag is sane
@@ -329,6 +333,9 @@ if (!$snmp && -f $FW_LOCK) {
 		  'Critical'     => 0, # critical entries in alert log
 		  'Non-Critical' => 0, # warning entries in alert log
 		  'Ok'           => 0, # ok entries in alert log
+		 },
+     'sensekey'  => {
+		  'Critical'     => 0, # critical entries in alert log
 		 },
     );
 
@@ -1255,6 +1262,7 @@ sub adjust_checks {
     foreach (keys %check) {
 	next CHECK_KEY if $_ eq 'esmlog';   # not part of global status
 	next CHECK_KEY if $_ eq 'alertlog'; # not part of global status
+  next CHECK_KEY if $_ eq 'sensekey';
 
 	if ($check{$_} == 0) { # found something with checking turned off
 	    $global = 0;
@@ -2013,7 +2021,9 @@ sub check_physical_disks {
 	    if (($state eq 'Online' or $state eq 'Ready')
 		and $status eq 'Non-Critical' and blacklisted('pdisk_cert', $nexus)) {
 		--$stack;
-	    }
+	    } elsif ($opt{ignore_uncertified}) {
+        --$stack;
+      }
 	    else {
 		push @states, 'Not Certified';
 	    }
@@ -4583,6 +4593,33 @@ sub check_sdcard {
     return;
 }
 
+#-----------------------------------------
+# CHASSIS: Check alert log
+#-----------------------------------------
+
+sub check_sensekey {
+
+    return if $snmp; # Not supported with SNMP
+
+    my @output = @{ run_omreport("$omopt_system alertlog") };
+    foreach my $out (@output) {
+        if ($out->{Description} =~ /Sense key:\s+(\d+)\s+Sense code:\s+(\d+)\s+Sense qualifier:\s+(\d+):\s+(.*?)$/
+                && ($1 == 6) && ($2 == 29)) {
+                ++$count{sensekey}{'Critical'};
+        }
+    }
+
+    # Create error messages and set exit value if appropriate
+    my $err = 0;
+    if ($count{sensekey}{'Critical'} > 0)        { $err = $E_CRITICAL; }
+
+    my $msg = sprintf 'Alert log contains %d sense key errors indicating an EMM has reset.',
+      $count{sensekey}{'Critical'};
+    report('other', $msg, $err);
+
+    return;
+}
+
 
 #-----------------------------------------
 # CHASSIS: Check alert log
@@ -4593,11 +4630,9 @@ sub check_alertlog {
 
     my @output = @{ run_omreport("$omopt_system alertlog") };
     foreach my $out (@output) {
-        if ($out->{Description} =~ /Sense key:\s+(\d+)\s+Sense code:\s+(\d+)\s+Sense qualifier:\s+(\d+):\s+(.*?)$/
-		&& ($1 == 6) && ($2 == 29)) {
-		$out->{Severity} = 'Critical'
-	}
-	++$count{alert}{$out->{Severity}};
+        next if ($out->{Description} =~ /Sense key:\s+(\d+)\s+Sense code:\s+(\d+)\s+Sense qualifier:\s+(\d+):\s+(.*?)$/
+          && ($1 == 6) && ($2 == 29));
+	      ++$count{alert}{$out->{Severity}};
     }
 
     # Create error messages and set exit value if appropriate
@@ -5122,6 +5157,7 @@ if ($check{amperage})    { check_pwrmonitoring(); }
 if ($check{intrusion})   { check_intrusion();     }
 if ($check{sdcard})      { check_sdcard();        }
 if ($check{alertlog})    { check_alertlog();      }
+if ($check{sensekey})    { check_sensekey();      }
 if ($check{esmlog})      { check_esmlog();        }
 if ($check{esmhealth})   { check_esmlog_health(); }
 if ($check{servicetag})  { check_servicetag();    }
@@ -5269,6 +5305,7 @@ if ($exit_code == $E_OK && defined $opt{only} && $opt{only} !~ m{\A critical|war
 	  'amperage'    => $count{amp} == 0 ? 'OK - no power monitoring probes found' : "AMPERAGE OK - $count{amp} amperage (power monitoring) probes checked",
 	  'intrusion'   => $count{intr} == 0 ? 'OK - no intrusion detection probes found' : "INTRUSION OK - $count{intr} intrusion detection probes checked",
 	  'alertlog'    => $snmp ? 'OK - not supported via snmp' : "OK - Alert Log content: $count{alert}{Ok} ok, $count{alert}{'Non-Critical'} warning and $count{alert}{Critical} critical",
+    'sensekey'    => $snmp ? 'OK - not supported via snmp' : "OK - No sense key 6 code 29 errors in alert log",
 	  'esmlog'      => "OK - ESM Log content: $count{esm}{Ok} ok, $count{esm}{'Non-Critical'} warning and $count{esm}{Critical} critical",
 	  'esmhealth'   => "ESM LOG OK - less than 80% used",
           'sdcard'      => "SD CARDS OK - $count{sd} SD cards installed",

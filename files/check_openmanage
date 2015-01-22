@@ -7,7 +7,7 @@
 # Monitor Dell server hardware status using Dell OpenManage Server
 # Administrator, either locally via NRPE, or remotely via SNMP.
 #
-# Copyright (C) 2008-2013 Trond H. Amundsen
+# Copyright (C) 2008-2014 Trond H. Amundsen
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ $SIG{__WARN__} = sub { push @perl_warnings, [@_]; };
 
 # Version and similar info
 $NAME    = 'check_openmanage';
-$VERSION = '3.7.11';
+$VERSION = '3.7.12';
 $AUTHOR  = 'Trond H. Amundsen';
 $CONTACT = 't.h.amundsen@usit.uio.no';
 
@@ -120,7 +120,7 @@ END_HELP
 # Version and license text
 $LICENSE = <<"END_LICENSE";
 $NAME $VERSION
-Copyright (C) 2008-2013 $AUTHOR
+Copyright (C) 2008-2014 $AUTHOR
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
@@ -2018,8 +2018,9 @@ sub check_physical_disks {
 	# Special case: Uncertified disk
 	if (!$cert) {
 	    # Functional non Dell disks get a Non-Critical status
-	    if (($state eq 'Online' or $state eq 'Ready')
-		and $status eq 'Non-Critical' and blacklisted('pdisk_cert', $nexus)) {
+	    if (($state eq 'Online' or $state eq 'Ready' or $state eq 'Non-RAID')
+		and $status eq 'Non-Critical' and not $fpred
+		and blacklisted('pdisk_cert', $nexus)) {
 		--$stack;
 	    } elsif ($opt{ignore_uncertified}) {
         --$stack;
@@ -2031,6 +2032,11 @@ sub check_physical_disks {
 	# Special case: Foreign disk
 	if ($state eq 'Foreign' and blacklisted('pdisk_foreign', $nexus)) {
 	    --$stack;
+	}
+
+	# Set failed disk as critical (override OMSA)
+        if ($state eq 'Failed') {
+	    $stack = 2;
 	}
 
 	# Create combined status and state

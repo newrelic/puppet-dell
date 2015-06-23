@@ -35,28 +35,31 @@ class dell::openmanage (
 
   case $::osfamily {
     'RedHat' : {
-      if $::operatingsystemmajrelease < 7 {
-        if $environment != 'vagrant' {
-          service { 'dataeng':
-            ensure     => 'running',
-            hasrestart => true,
-            hasstatus  => true,
-            require    => [ Package['srvadmin-deng'] ],
+      case $operatingsystemrelease {
+        /^[1-6]\./: {
+          if $environment != 'vagrant' {
+            service { 'dataeng':
+              ensure     => 'running',
+              hasrestart => true,
+              hasstatus  => true,
+              require    => [ Package['srvadmin-deng'] ],
+            }
           }
         }
-      } else {
-        exec { "IGNORE_GENERATION":
-          cwd     => "/var/tmp",
-          command => "mkdir -p /opt/dell/srvadmin/lib64/openmanage && touch /opt/dell/srvadmin/lib64/openmanage/IGNORE_GENERATION",
-          creates => "/opt/dell/srvadmin/lib64/openmanage/IGNORE_GENERATION",
-          path    => ["/bin", "/usr/bin"]
-        }
-        if $environment != 'vagrant' {
-          service { 'dataeng':
-            ensure     => 'running',
-            hasrestart => true,
-            hasstatus  => true,
-            require    => [ Package['srvadmin-deng'], Exec['IGNORE_GENERATION'] ],
+        default: {
+          exec { "IGNORE_GENERATION":
+            cwd     => "/var/tmp",
+            command => "mkdir -p /opt/dell/srvadmin/lib64/openmanage && touch /opt/dell/srvadmin/lib64/openmanage/IGNORE_GENERATION",
+            creates => "/opt/dell/srvadmin/lib64/openmanage/IGNORE_GENERATION",
+            path    => ["/bin", "/usr/bin"]
+          }
+          if $environment != 'vagrant' {
+            service { 'dataeng':
+              ensure     => 'running',
+              hasrestart => true,
+              hasstatus  => true,
+              require    => [ Package['srvadmin-deng'], Exec['IGNORE_GENERATION'] ],
+            }
           }
         }
       }

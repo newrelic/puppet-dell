@@ -20,11 +20,15 @@ class dell::openmanage (
   $webserver = false,
 ) inherits dell::params {
 
-  # Avoid dependency resolution problems by removing a package that's no
-  # longer required by Dell Software Update.  This needs to be removed
-  # when upgrading but can be installed later if required.
+  # Avoid dependency resolution problems by removing packages that dell
+  # system update no longer depends on.
   #
-  package { 'python-smbios':
+  $python_smbios_packages = [
+    'python-smbios',
+    'smbios-utils-python',
+    'yum-dellsysid',
+  ]
+  package { $python_smbios_packages:
     ensure => 'absent',
   }
 

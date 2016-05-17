@@ -20,9 +20,18 @@ class dell::openmanage (
   $webserver = false,
 ) inherits dell::params {
 
+  # Avoid dependency resolution problems by removing a package that's no
+  # longer required by Dell Software Update.  This needs to be removed
+  # when upgrading but can be installed later if required.
+  #
+  package { 'python-smbios':
+    ensure => 'absent',
+  }
+
   ########################################
   # Base packages and services
   ########################################
+  
   $base_packages = [
     'srvadmin-omilcore',
     'srvadmin-deng',

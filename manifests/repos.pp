@@ -36,37 +36,57 @@ class dell::repos() inherits dell::params {
     'RedHat' : {
 
       ########################################
-      # Create the two repos
+      # Repo Cleanup
       ########################################
 
-      # Ensure that the old package isn't present.
-      package { 'dell-omsa-repository':
-        ensure => 'absent',
+      # Provide a way to expire the yum cache after modifying
+      # repositories.
+      #
+      exec { 'yum-clean-expire-cache':
+        user => 'root',
+        path => '/usr/bin',
+        command => 'yum clean expire-cache',
+        refreshonly => true,
       }
 
-	  yumrepo { 'dell-dsu-os_independent':
-		descr          => 'Dell System Update Repository - OS Independent',
-		baseurl        => 'http://linux.dell.com/repo/hardware/latest/os_independent/',
-		gpgkey         => 'http://linux.dell.com/repo/hardware/latest/public.key',
-		gpgcheck       => 1,
-		enabled        => 1,
-		failovermethod => 'priority',
-	  }
+      # Avoid dependency problems by ensuring that previous repo
+      # definitions from this manifest aren't present.
+      #
+      package { 'dell-omsa-repository':
+        ensure => 'absent',
+        require => Exec[ 'yum-clean-expire-cache' ],
+      }
 
-	  yumrepo { 'dell-dsu-os_dependent':
-		descr          => 'Dell System Update Repository - OS Dependent',
-		mirrorlist     => 'http://linux.dell.com/repo/hardware/latest/mirrors.cgi?osname=el${::lsbmajdistrelease}&basearch=\$basearch&native=1',
-		gpgkey         => 'http://linux.dell.com/repo/hardware/latest/public.key',
-		gpgcheck       => 1,
-		enabled        => 1,
-		failovermethod => 'priority',
-	  }
-
-	  # TODO: Do we need to manage the RPM key, or does yumrepo do it?
+      $dell_ft_repo_files = [
+        '/etc/yum.repos.d/dell-omsa-indep.repo',
+        '/etc/yum.repos.d/dell-omsa-specific.repo'
+      ]
+      file { $dell_ft_repo_files:
+        ensure => 'absent',
+        require => Exec[ 'yum-clean-expire-cache' ],
+      }
 
       ########################################
-      # GPG-KEY Management
+      # Create the DSU Repositories
       ########################################
+
+      yumrepo { 'dell-dsu-os_independent':
+        descr          => 'Dell System Update Repository - OS Independent',
+        baseurl        => 'http://linux.dell.com/repo/hardware/latest/os_independent/',
+        gpgkey         => 'http://linux.dell.com/repo/hardware/latest/public.key',
+        gpgcheck       => 1,
+        enabled        => 1,
+        failovermethod => 'priority',
+      }
+
+      yumrepo { 'dell-dsu-os_dependent':
+        descr          => 'Dell System Update Repository - OS Dependent',
+        mirrorlist     => 'http://linux.dell.com/repo/hardware/latest/mirrors.cgi?osname=el${::lsbmajdistrelease}&basearch=\$basearch&native=1',
+        gpgkey         => 'http://linux.dell.com/repo/hardware/latest/public.key',
+        gpgcheck       => 1,
+        enabled        => 1,
+        failovermethod => 'priority',
+      }
 
       file { '/etc/pki/rpm-gpg/RPM-GPG-KEY-dsu':
         ensure => 'present',
@@ -82,7 +102,7 @@ class dell::repos() inherits dell::params {
         refreshonly => true,
       }
 
-	}
+    }
   }
 }
 

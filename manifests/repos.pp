@@ -34,68 +34,71 @@ class dell::repos() inherits dell::params {
 
     }
     'RedHat' : {
-      ########################################
-      # Create the two repos
-      ########################################
-
-      # This would add duplicate repos, and we want to manage them explicitly
-      package { 'dell-omsa-repository':
-        ensure => 'absent',
-      }
-
-      if $::osfamily == 'RedHat'{
-        if $::operatingsystemmajrelease < 7 {
-          yumrepo { 'dell-omsa-indep':
-            descr          => 'Dell OMSA repository - Hardware     independent',
-            enabled        => 1,
-            mirrorlist     => $dell::params::repo_indep_mirrorlist,
-            gpgcheck       => 1,
-            gpgkey         => $dell::params::repo_indep_gpgkey,
-            failovermethod => 'priority',
-            require        => Package['dell-omsa-repository'],
-          } -> package { 'yum-dellsysid':  # I dislike this syntax, but     require would not work for some reason...
-            ensure  => 'present',
-          }
-        }
-      }
-
-      yumrepo { 'dell-omsa-specific':
-        descr          => 'Dell OMSA repository - Hardware specific',
-        enabled        => 1,
-        mirrorlist     => $dell::params::repo_specific_mirrorlist,
-        gpgcheck       => 1,
-        gpgkey         => $dell::params::repo_specific_gpgkey,
-        failovermethod => 'priority',
-        require        => Package['dell-omsa-repository'],
-      }
-
 
       ########################################
-      # GPG-KEY Management
+      # Repo Cleanup
       ########################################
-      file { '/etc/pki/rpm-gpg/RPM-GPG-KEY-dell':
-        ensure => 'present',
-        owner  => 'root',
-        group  => 'root',
-        mode   => '0644',
-        source => 'puppet:///modules/dell/RPM-GPG-KEY-dell',
-      }
-      exec { 'dell-RPM-GPG-KEY-dell':
-        command     => '/bin/rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-dell',
-        subscribe   => File['/etc/pki/rpm-gpg/RPM-GPG-KEY-dell'],
+
+      # Provide a way to expire the yum cache after modifying
+      # repositories.
+      #
+      exec { 'yum-clean-expire-cache':
+        user => 'root',
+        path => '/usr/bin',
+        command => 'yum clean expire-cache',
         refreshonly => true,
       }
 
-      file { '/etc/pki/rpm-gpg/RPM-GPG-KEY-libsmbios':
+      # Avoid dependency problems by ensuring that previous repo
+      # definitions from this manifest aren't present.
+      #
+      package { 'dell-omsa-repository':
+        ensure => 'absent',
+        require => Exec[ 'yum-clean-expire-cache' ],
+      }
+
+      $dell_ft_repo_files = [
+        '/etc/yum.repos.d/dell-omsa-indep.repo',
+        '/etc/yum.repos.d/dell-omsa-specific.repo'
+      ]
+      file { $dell_ft_repo_files:
+        ensure => 'absent',
+        require => Exec[ 'yum-clean-expire-cache' ],
+      }
+
+      ########################################
+      # Create the DSU Repositories
+      ########################################
+
+      yumrepo { 'dell-dsu-os_independent':
+        descr          => 'Dell System Update Repository - OS Independent',
+        baseurl        => 'http://linux.dell.com/repo/hardware/latest/os_independent/',
+        gpgkey         => 'http://linux.dell.com/repo/hardware/latest/public.key',
+        gpgcheck       => 1,
+        enabled        => 1,
+        failovermethod => 'priority',
+      }
+
+      yumrepo { 'dell-dsu-os_dependent':
+        descr          => 'Dell System Update Repository - OS Dependent',
+        mirrorlist     => 'http://linux.dell.com/repo/hardware/latest/mirrors.cgi?osname=el$releasever&basearch=$basearch&native=1',
+        gpgkey         => 'http://linux.dell.com/repo/hardware/latest/public.key',
+        gpgcheck       => 1,
+        enabled        => 1,
+        failovermethod => 'priority',
+      }
+
+      file { '/etc/pki/rpm-gpg/RPM-GPG-KEY-dsu':
         ensure => 'present',
         owner  => 'root',
         group  => 'root',
         mode   => '0644',
-        source => 'puppet:///modules/dell/RPM-GPG-KEY-libsmbios',
+        source => 'puppet:///modules/dell/RPM-GPG-KEY-dsu',
       }
-      exec { 'dell-RPM-GPG-KEY-libsmbios':
-        command     => '/bin/rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-libsmbios',
-        subscribe   => File['/etc/pki/rpm-gpg/RPM-GPG-KEY-libsmbios'],
+
+      exec { 'dell-RPM-GPG-KEY-dsu':
+        command     => '/bin/rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-dsu',
+        subscribe   => File['/etc/pki/rpm-gpg/RPM-GPG-KEY-dsu'],
         refreshonly => true,
       }
 

@@ -29,7 +29,7 @@ class dell::openmanage (
     'yum-dellsysid',
   ]
   package { $python_smbios_packages:
-    ensure => 'absent',
+    ensure => 'purged',
   }
 
   ########################################

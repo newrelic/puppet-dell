@@ -181,6 +181,17 @@ class dell::openmanage (
     }
   }
 
+  if $::osfamily == 'RedHat' {
+    if $::operatingsystemmajrelease < 7 {
+      file_line { 'CentOS 7 srvadmin-storage compatibility fix':
+        path   => '/opt/dell/srvadmin/etc/srvadmin-storage/stsvc.ini',
+        line   => '#vil7=dsm_sm_psrvil',
+        match  => '^vil7=dsm_sm_psrvil$',
+        notify => Service['dataeng'],
+      }
+    }
+  }
+
   ########################################
   # iDRAC (default: true)
   ########################################

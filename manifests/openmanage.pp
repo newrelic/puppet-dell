@@ -181,12 +181,15 @@ class dell::openmanage (
     }
   }
 
+  # For CentOS 7, this srvadmin-storage component causes the dataeng service
+  # to segfault during startup.
+  #
   if $::osfamily == 'RedHat' {
     if $::operatingsystemmajrelease < 7 {
       file_line { 'CentOS 7 srvadmin-storage compatibility fix':
+        ensure => 'absent',
         path   => '/opt/dell/srvadmin/etc/srvadmin-storage/stsvc.ini',
-        line   => '#vil7=dsm_sm_psrvil',
-        match  => '^vil7=dsm_sm_psrvil$',
+        line   => 'vil7=dsm_sm_psrvil',
         notify => Service['dataeng'],
       }
     }
